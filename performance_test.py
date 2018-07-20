@@ -3,8 +3,49 @@ import requests
 from basic_commands.post_data import *
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import parallel_bulk
+from util.commands import *
+from multiprocessing import Pool
 
 es = Elasticsearch()
+
+_responses = []
+
+
+count = 0
+tot = 0
+
+
+
+def print_res(url, json):
+
+
+    res = requests.get(url, json=json)
+    # _responses.append(res)
+
+
+def multi_processing_query_test():
+    query_json = {
+        "query": {
+            "fuzzy": {
+                "name": "a.ng"
+            }
+        }
+    }
+
+    query_url = get_cluster_url() + '/twitter/tweet/_search?size=30'
+
+    t1 = time.time()
+    p = Pool()
+
+    test_time = 10000
+
+    for i in range(test_time):
+        p.apply_async(print_res, args=[query_url, query_json, ])
+
+    p.close()
+    p.join()
+    t2 = time.time()
+    print t2 - t1
 
 
 def generate_batch_data(index=None, id=None, type='doc', single_data=None):
@@ -102,7 +143,7 @@ def test_batch_data_insert_time(datas=None):
     print 'batch data insert done,time cost:%f' % (t2 - t1)
 
 
-def test_batch_scan_time(index=None,display=False):
+def test_batch_scan_time(index=None, display=False):
     print 'begin batch data scan...'
     from elasticsearch.helpers import scan, bulk
     t1 = time.time()
@@ -143,10 +184,11 @@ def main():
     # datas = generate_test_data('merchant',1000000)
 
     # test_batch_data_insert_time(datas)
-    test_batch_scan_time('merchant')
+    # test_batch_scan_time('merchant')
 
     # datas = generate_test_data('books',10000)
     # multi_processing_post_test('book',datas) # too slow
+    multi_processing_query_test()
 
 
 def generate_random_merchant_info():
