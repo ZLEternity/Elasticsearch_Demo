@@ -20,9 +20,9 @@ def word_generator(size=6, chars=string.lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def random_name_generator(data_num=10):
+def random_name_generator(name_prefixs=None,data_num=10):
     for i in range(data_num):
-        yield ' '.join(word_generator() for k in range(3))
+        yield random.choice(name_prefixs)+ ' ' + ' '.join(word_generator() for k in range(2))
 
 
 def real_name_generator(data_num=10, real_name_prefix=['Adam', 'Sr.', 'Bayes']):
