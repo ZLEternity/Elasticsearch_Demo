@@ -4,37 +4,40 @@ from basic_commands.post_data import *
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import parallel_bulk
 from util.commands import *
-from multiprocessing import Pool
+from multiprocessing import Pool,Manager
+import json
 
 es = Elasticsearch()
 
 _responses = []
 
-
 count = 0
 tot = 0
 
 
+def print_res(url, json_data, proc_num=None, return_dict=None):
+    res = requests.get(url, json=json_data)
+    response_json = json.loads(res.content)
 
-def print_res(url, json):
+    if proc_num is not None and return_dict is not None:
+        return_dict[proc_num] = response_json
 
 
-    res = requests.get(url, json=json)
-    # _responses.append(res)
-
-
-def multi_processing_query_test(query_json,query_url,query_time = 100):
+def multi_processing_query_test(query_json, query_url, query_time=100,return_dict=None):
+    print 'testing query:%s' % query_json
+    print 'query_url:%s' % query_url
 
     t1 = time.time()
+
     p = Pool()
 
-
     for i in range(query_time):
-        p.apply_async(print_res, args=[query_url, query_json, ])
+        p.apply_async(print_res, args=[query_url, query_json, i, return_dict, ])
 
     p.close()
     p.join()
     t2 = time.time()
+    print return_dict
     print t2 - t1
 
 
@@ -180,16 +183,17 @@ def main():
     # multi_processing_post_test('book',datas) # too slow
     query_json = {
         "query": {
-            "fuzzy": {
-                "name": "a.ng"
+            "match": {
+                "name": "test"
             }
         }
     }
 
-    query_url = get_cluster_url() + '/twitter/tweet/_search?size=30'
+    query_url = get_cluster_url() + '/b/_search?size=30'
 
-    multi_processing_query_test(query_json,query_url,1000)
+    multi_processing_query_test(query_json, query_url, 1000)
 
+    return
     query_json = {
         "query": {
             "match": {
@@ -200,8 +204,7 @@ def main():
 
     query_url = get_cluster_url() + '/shakespeare/_search?size=30'
 
-    multi_processing_query_test(query_json,query_url,1000)
-
+    multi_processing_query_test(query_json, query_url, 1000)
 
 
 def generate_random_merchant_info():
