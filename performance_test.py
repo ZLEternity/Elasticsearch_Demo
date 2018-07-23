@@ -23,23 +23,13 @@ def print_res(url, json):
     # _responses.append(res)
 
 
-def multi_processing_query_test():
-    query_json = {
-        "query": {
-            "fuzzy": {
-                "name": "a.ng"
-            }
-        }
-    }
-
-    query_url = get_cluster_url() + '/twitter/tweet/_search?size=30'
+def multi_processing_query_test(query_json,query_url,query_time = 100):
 
     t1 = time.time()
     p = Pool()
 
-    test_time = 10000
 
-    for i in range(test_time):
+    for i in range(query_time):
         p.apply_async(print_res, args=[query_url, query_json, ])
 
     p.close()
@@ -188,7 +178,30 @@ def main():
 
     # datas = generate_test_data('books',10000)
     # multi_processing_post_test('book',datas) # too slow
-    multi_processing_query_test()
+    query_json = {
+        "query": {
+            "fuzzy": {
+                "name": "a.ng"
+            }
+        }
+    }
+
+    query_url = get_cluster_url() + '/twitter/tweet/_search?size=30'
+
+    multi_processing_query_test(query_json,query_url,1000)
+
+    query_json = {
+        "query": {
+            "match": {
+                "play_name": "Henry IV"
+            }
+        }
+    }
+
+    query_url = get_cluster_url() + '/shakespeare/_search?size=30'
+
+    multi_processing_query_test(query_json,query_url,1000)
+
 
 
 def generate_random_merchant_info():
